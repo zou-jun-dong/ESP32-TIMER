@@ -1,26 +1,16 @@
+#include "driver/gpio.h"
+#include "Arduino.h"
 #include "driver/timer.h"
 
-//Define timer group and timer index
+#define TEST_GPIO GPIO_NUM_2
 #define TIMER_GROUP TIMER_GROUP_0
 #define TIMER_IDX TIMER_0
 
-void init_hardware_timer(){
-  //Initialize timer using timer_config_t structure
-  timer_config_t config = {
-    .alarm_en = TIMER_ALARM_EN,  //Enable alarm(interrupt)
-    .intr_type = TIMER_INTR_LEVEL,  //Use level interrupt
-    .counter_dir = TIMER_COUNT_UP,  
-    .divider = 80
-  };
+void IRAM_ATTR onTimerISR(void* arg) {
 
-  //Initialize the timer
-  timer_init(TIMER_GROUP,TIMER_IDX,&config);
+    timer_group_clr_intr_status_in_isr(TIMER_GROUP, TIMER_IDX);
+    timer_group_enable_alarm_in_isr(TIMER_GROUP, TIMER_IDX);
 
-  //Set high-precision trigger period to 500 microseconds
-  timer_set_counter_value(TIMER_GROUP,TIMER_IDX,0);
-  timer_set_alarm_value(TIMER_GROUP,TIMER_IDX,500);
-
-  //Enable timer interrupt
-  timer_enable_intr(TIMER_GROUP,TIMER_IDX);
-  timer_start(TIMER_GROUP,TIMER_IDX);
+    uint32_t current_level = gpio_get_level(TEST_GPIO);
+    gpio_set_level(TEST_GPIO, !current_level);
 }
