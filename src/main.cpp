@@ -27,5 +27,20 @@ void IRAM_ATTR onTimerISR(void* arg) {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;   //Default:no higher priority task token
 
         xQueueSendFromISR(Queue,&isr_count,&xHigherPriorityTaskWoken);    //Call the interrupt-safe API to send data
+        if (xHigherPriorityTaskWoken == pdTRUE)
+        {
+            portYIELD_FROM_ISR();
+        }
     }
+}
+
+void DataProcessTask(void* pvParameters){
+    uint32_t received_count;
+    while (1)
+    {
+        if(xQueueReceive(Queue,&received_count,portMAX_DELAY)){
+            printf("Received from ISR:%u\n",received_count);
+        }
+    }
+    
 }
